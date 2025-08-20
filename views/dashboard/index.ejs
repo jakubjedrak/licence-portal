@@ -1,0 +1,206 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><%= t('general.dashboard') %></h1>
+    <% if (!isAdmin) { %>
+        <a href="/tickets/new" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            <%= t('tickets.new_ticket') %>
+        </a>
+    <% } %>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted"><%= t('dashboard.total_tickets') %></h6>
+                        <h3 class="card-title mb-0"><%= stats.total %></h3>
+                    </div>
+                    <i class="bi bi-ticket-detailed text-primary" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card dashboard-card warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted"><%= t('dashboard.pending_tickets') %></h6>
+                        <h3 class="card-title mb-0"><%= stats.pending %></h3>
+                    </div>
+                    <i class="bi bi-clock-history text-warning" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card dashboard-card success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted"><%= t('dashboard.completed_tickets') %></h6>
+                        <h3 class="card-title mb-0"><%= stats.completed %></h3>
+                    </div>
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card dashboard-card info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-muted"><%= t('dashboard.total_savings') %></h6>
+                        <h3 class="card-title mb-0">€<%= (stats.confirmed_savings || 0).toLocaleString() %></h3>
+                    </div>
+                    <i class="bi bi-graph-up text-info" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Tickets -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><%= t('dashboard.recent_tickets') %></h5>
+                <a href="/tickets" class="btn btn-sm btn-outline-primary"><%= t('dashboard.view_all') %></a>
+            </div>
+            <div class="card-body">
+                <% if (recentTickets.length === 0) { %>
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-ticket-detailed" style="font-size: 3rem;"></i>
+                        <p class="mt-2"><%= t('dashboard.no_tickets') %></p>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><%= t('tickets.ticket_number') %></th>
+                                    <th><%= t('general.title') %></th>
+                                    <th><%= t('general.status') %></th>
+                                    <th><%= t('general.created') %></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% recentTickets.forEach(ticket => { %>
+                                    <tr onclick="window.location.href='/tickets/<%= ticket.id %>'" style="cursor: pointer;">
+                                        <td><strong><%= ticket.ticket_number %></strong></td>
+                                        <td>
+                                            <%= ticket.title %>
+                                            <% if (!isAdmin) { %>
+                                                <small class="text-muted d-block"><%= ticket.catalog_item.name %></small>
+                                            <% } else { %>
+                                                <small class="text-muted d-block">
+                                                    <%= ticket.user.first_name %> <%= ticket.user.last_name %> - <%= ticket.catalog_item.name %>
+                                                </small>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="badge status-<%= ticket.status %>">
+                                                <%= t('tickets.status_' + ticket.status) %>
+                                            </span>
+                                        </td>
+                                        <td><%= moment(ticket.created_at).format('MMM DD, YYYY') %></td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity / Notifications -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><%= t('dashboard.recent_activity') %></h5>
+            </div>
+            <div class="card-body">
+                <% if (recentNotifications.length === 0) { %>
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-bell-slash" style="font-size: 2rem;"></i>
+                        <p class="mt-2"><%= t('dashboard.no_activity') %></p>
+                    </div>
+                <% } else { %>
+                    <% recentNotifications.forEach(notification => { %>
+                        <div class="d-flex mb-3 pb-3 border-bottom">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="bi <%= notification.getTypeIcon() %> text-<%= notification.type %>"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1"><%= notification.title %></h6>
+                                <p class="mb-1 text-muted small"><%= notification.message %></p>
+                                <small class="text-muted"><%= moment(notification.created_at).fromNow() %></small>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (isAdmin && adminStats) { %>
+    <!-- Admin Statistics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><%= t('dashboard.system_statistics') %></h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 class="text-primary"><%= adminStats.totalUsers || 0 %></h3>
+                                <p class="text-muted"><%= t('admin.users') %></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 class="text-info"><%= adminStats.totalCatalogItems || 0 %></h3>
+                                <p class="text-muted"><%= t('catalog.catalog') %></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 class="text-warning">€<%= (stats.estimated_savings || 0).toLocaleString() %></h3>
+                                <p class="text-muted"><%= t('dashboard.estimated_savings') %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<script>
+    // Auto-refresh dashboard statistics every 30 seconds
+    setInterval(async function() {
+        try {
+            const response = await fetch('/api/dashboard/stats');
+            const data = await response.json();
+            if (data.success) {
+                // Update statistics display
+                document.querySelector('.dashboard-card .card-title').textContent = data.stats.total;
+                // Update other stats as needed
+            }
+        } catch (error) {
+            console.error('Error refreshing dashboard stats:', error);
+        }
+    }, 30000);
+</script>
